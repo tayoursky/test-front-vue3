@@ -22,11 +22,13 @@ onMounted(async () => {
     console.log(error);
   }
 });
-const { addPage, fetchItems, showAddPage, moreItemCount } = usePageLoader(
-  addPageFn,
-  fetchItemsFn,
-  total
-);
+const { addPage, fetchItems, showAddPage, moreItemCount, currentParams } =
+  usePageLoader(addPageFn, fetchItemsFn, total);
+
+const onPaginationHandler = async (page) => {
+  currentParams.page = page;
+  await fetchItems(currentParams);
+};
 </script>
 
 <template>
@@ -40,13 +42,40 @@ const { addPage, fetchItems, showAddPage, moreItemCount } = usePageLoader(
     </div>
     <p v-if="error">{{ error.message }}</p>
     <div>
-      <!--      <VueAwesomePaginate-->
-      <!--        :total-items="12"-->
-      <!--        :items-per-page="2"-->
-      <!--        :max-pages-shown="2"-->
-      <!--        :current-page="queryParams.page"-->
-      <!--        :on-click="addPage"-->
-      <!--      />-->
+      <vue-awesome-paginate
+        :total-items="total"
+        :items-per-page="currentParams.per_page"
+        :current-page="currentParams.page"
+        :on-click="onPaginationHandler"
+      />
     </div>
   </main>
 </template>
+
+<style>
+.pagination-container {
+  display: flex;
+  column-gap: 10px;
+  margin-top: 20px;
+}
+.paginate-buttons {
+  height: 40px;
+  width: 40px;
+  border-radius: 20px;
+  cursor: pointer;
+  background-color: rgb(242, 242, 242);
+  border: 1px solid rgb(217, 217, 217);
+  color: black;
+}
+.paginate-buttons:hover {
+  background-color: #d8d8d8;
+}
+.active-page {
+  background-color: #3498db;
+  border: 1px solid #3498db;
+  color: white;
+}
+.active-page:hover {
+  background-color: #2988c8;
+}
+</style>

@@ -11,7 +11,6 @@ export const useUsersStore = defineStore({
   }),
   getters: {
     getUsers: (state) => state.users,
-    getTotal: (state) => state.total,
   },
   actions: {
     async fetchUsers(queryParams) {

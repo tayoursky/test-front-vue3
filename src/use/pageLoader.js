@@ -52,6 +52,8 @@ export function usePageLoader(addPageFn, fetchItemsFn, total) {
     fetchItems,
     showAddPage,
     moreItemCount,
+    total,
+    currentParams,
   };
 }
 
