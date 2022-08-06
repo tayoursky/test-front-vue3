@@ -6,13 +6,12 @@ export const useUsersStore = defineStore({
   state: () => ({
     users: [],
     error: null,
-    page: 0,
-    per_page: 0,
     total: 0,
     loading: false,
   }),
   getters: {
     getUsers: (state) => state.users,
+    getTotal: (state) => state.total,
   },
   actions: {
     async fetchUsers(queryParams) {
@@ -23,6 +22,7 @@ export const useUsersStore = defineStore({
           .get("https://reqres.in/api/users", { params: queryParams })
           .then((response) => {
             this.users = response.data.data;
+            this.total = response.data.total;
           });
       } catch (error) {
         this.error = error;
