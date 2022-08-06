@@ -1,19 +1,23 @@
 <script setup>
 import UserList from "/src/components/UserList.vue";
-import { onMounted } from "vue";
+import { onMounted, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 import { useUsersStore } from "/src/stores/users.js";
 import { usePageLoader } from "/src/use/pageLoader.js";
 
 const usersStore = useUsersStore();
 const { users, error, loading, total } = storeToRefs(usersStore);
+const perPageOptions = [2, 3, 5];
 
 const addPageFn = async (currentParams) => {
   await usersStore.addPage(currentParams);
 };
-const fetchItemsFn = async (currentParams) => {
-  await usersStore.fetchUsers(currentParams);
+const fetchItemsFn = async (currentParams, params) => {
+  await usersStore.fetchUsers(currentParams, params);
 };
+
+const { addPage, fetchItems, showAddPage, moreItemCount, currentParams } =
+  usePageLoader(addPageFn, fetchItemsFn, total);
 
 onMounted(async () => {
   try {
@@ -22,12 +26,15 @@ onMounted(async () => {
     console.log(error);
   }
 });
-const { addPage, fetchItems, showAddPage, moreItemCount, currentParams } =
-  usePageLoader(addPageFn, fetchItemsFn, total);
+
+const perPage = ref(currentParams.per_page);
+
+watch(perPage, async () => {
+  await fetchItems({ per_page: perPage.value });
+});
 
 const onPaginationHandler = async (page) => {
-  currentParams.page = page;
-  await fetchItems(currentParams);
+  await fetchItems({ page });
 };
 </script>
 
@@ -35,20 +42,28 @@ const onPaginationHandler = async (page) => {
   <main>
     <div class="wrapper">
       <div v-if="loading">Loading...</div>
-      <user-list v-else :items="users" />
-      <button v-if="showAddPage" @click="addPage">
-        Добавить ещё {{ moreItemCount }}
-      </button>
+      <div v-else>
+        <span>Показывать по:</span>
+        <select v-model="perPage">
+          <option v-for="item in perPageOptions" :key="item" :value="item">
+            {{ item }}
+          </option>
+        </select>
+
+        <user-list :items="users" />
+        <button v-if="showAddPage" @click="addPage">
+          Добавить ещё {{ moreItemCount }}
+        </button>
+
+        <vue-awesome-paginate
+          :total-items="total"
+          :items-per-page="currentParams.per_page"
+          :current-page="currentParams.page"
+          :on-click="onPaginationHandler"
+        />
+      </div>
     </div>
     <p v-if="error">{{ error.message }}</p>
-    <div>
-      <vue-awesome-paginate
-        :total-items="total"
-        :items-per-page="currentParams.per_page"
-        :current-page="currentParams.page"
-        :on-click="onPaginationHandler"
-      />
-    </div>
   </main>
 </template>
 

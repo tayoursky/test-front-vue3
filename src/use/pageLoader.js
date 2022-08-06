@@ -1,13 +1,27 @@
 import { reactive, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { filterQueryParams, cleanQuery } from "/src/utils/filterQueryParams.js";
 
-export function usePageLoader(addPageFn, fetchItemsFn, total) {
-  const defaultParams = { page: 1, per_page: 2 };
+export function usePageLoader(
+  addPageFn,
+  fetchItemsFn,
+  total,
+  otherDefaultParams = {}
+) {
+  const defaultParams = Object.assign(
+    { page: 1, per_page: 2 },
+    otherDefaultParams
+  );
   const route = useRoute();
   const router = useRouter();
   const showAddPage = ref(false);
   const moreItemCount = ref(null);
-  const currentParams = reactive({ ...route.query, ...defaultParams });
+
+  const routeQueryParams = filterQueryParams(
+    route.query,
+    Object.keys(defaultParams)
+  );
+  let currentParams = reactive({ ...defaultParams, ...routeQueryParams });
 
   const initButton = () => {
     const remain = Math.max(
@@ -19,21 +33,8 @@ export function usePageLoader(addPageFn, fetchItemsFn, total) {
     showAddPage.value = moreItemCount.value > 0;
   };
 
-  const cleanQuery = (currentParams, defaultParams) => {
-    const currentObj = Object.assign({}, currentParams);
-    const defaultObj = Object.assign({}, defaultParams);
-    for (const prop in currentObj) {
-      const currentParam = Number(currentObj[prop]);
-      const defaultParam = Number(defaultObj[prop]);
-      if (currentParam === defaultParam) {
-        delete currentObj[prop];
-      }
-    }
-    return currentObj;
-  };
-
-  const fetchFn = async (fn) => {
-    await fn(currentParams);
+  const fetchFn = async (fn, params) => {
+    await fn(currentParams, params);
     initButton();
     const query = cleanQuery(currentParams, defaultParams);
     await router.push({ query });
@@ -43,8 +44,8 @@ export function usePageLoader(addPageFn, fetchItemsFn, total) {
     await fetchFn(addPageFn);
   };
 
-  const fetchItems = async () => {
-    await fetchFn(fetchItemsFn);
+  const fetchItems = async (params = {}) => {
+    await fetchFn(fetchItemsFn, params);
   };
 
   return {

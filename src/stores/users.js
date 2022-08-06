@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import axios from "axios";
+import { api } from "/src/utils/api.js";
 
 export const useUsersStore = defineStore({
   id: "users",
@@ -13,15 +13,20 @@ export const useUsersStore = defineStore({
     getUsers: (state) => state.users,
   },
   actions: {
-    async fetchUsers(queryParams) {
+    async fetchUsers(currentParams, params) {
       this.users = [];
       this.loading = true;
       try {
-        await axios
-          .get("https://reqres.in/api/users", { params: queryParams })
+        await api
+          .get("users", {
+            params: { ...currentParams, ...params },
+          })
           .then((response) => {
             this.users = response.data.data;
             this.total = response.data.total;
+          })
+          .then(() => {
+            currentParams = Object.assign(currentParams, params);
           });
       } catch (error) {
         this.error = error;
@@ -32,8 +37,8 @@ export const useUsersStore = defineStore({
     async addPage(currentParams) {
       const page = Number(currentParams.page) + 1;
 
-      await axios
-        .get("https://reqres.in/api/users", {
+      await api
+        .get("users", {
           params: { ...currentParams, page },
         })
         .then((response) => {
