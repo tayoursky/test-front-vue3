@@ -7,6 +7,7 @@ import { useRoute, useRouter } from "vue-router";
 
 const route = useRoute();
 const router = useRouter();
+
 const defaultParams = {
   page: 1,
   per_page: 2,
@@ -14,10 +15,31 @@ const defaultParams = {
 
 const usersStore = useUsersStore();
 const { users, error, loading } = storeToRefs(usersStore);
-const currentParams = Object.assign(defaultParams, route.query);
+
+const cleanQuery = (currentParams, defaultParams) => {
+  const currentObj = Object.assign({}, currentParams);
+  const defaultObj = Object.assign({}, defaultParams);
+  for (const prop in currentObj) {
+    const currentParam = Number(currentObj[prop]);
+    const defaultParam = Number(defaultObj[prop]);
+    if (currentParam === defaultParam) {
+      delete currentObj[prop];
+    }
+  }
+  return currentObj;
+};
+
+const getCurrentParams = (currentParams, defaultParams) => {
+  const currentObj = Object.assign({}, currentParams);
+  const defaultObj = Object.assign({}, defaultParams);
+  return Object.assign(defaultObj, currentObj);
+};
 
 onMounted(async () => {
+  const currentParams = getCurrentParams(route.query, defaultParams);
   await usersStore.fetchUsers(currentParams);
+  const query = cleanQuery(currentParams, defaultParams);
+  await router.push({ query });
 });
 // const getUsers = async (queryParams) => {
 //   loading.value = true;
@@ -43,8 +65,10 @@ onMounted(async () => {
 // };
 
 const addPage = async () => {
+  const currentParams = getCurrentParams(route.query, defaultParams);
   await usersStore.addPage(currentParams);
-  await router.push({ query: currentParams });
+  const query = cleanQuery(currentParams, defaultParams);
+  await router.push({ query });
 };
 </script>
 
